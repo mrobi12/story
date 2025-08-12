@@ -75,6 +75,17 @@
         const submitWebhook = "https://api2.longeststoryever.xyz/webhook/v1";
         const getStoryWebhook = "https://api2.longeststoryever.xyz/webhook/story";
 
+        // ✅ Ensure first letter is uppercase & correct punctuation
+        function formatSentence(sentence) {
+            sentence = sentence.trim();
+            if (sentence.length === 0) return "";
+            sentence = sentence.charAt(0).toUpperCase() + sentence.slice(1);
+            if (!/[.!?]$/.test(sentence)) {
+                sentence += ".";
+            }
+            return sentence;
+        }
+
         async function fetchStory() {
             try {
                 const res = await fetch(getStoryWebhook, { method: "POST" });
@@ -87,7 +98,9 @@
         }
 
         async function submitSentence() {
-            const sentence = document.getElementById("sentenceInput").value.trim();
+            let sentence = document.getElementById("sentenceInput").value;
+            sentence = formatSentence(sentence);
+
             if (!sentence) {
                 alert("Please enter a sentence.");
                 return;
@@ -111,7 +124,7 @@
 
                 document.getElementById("sentenceInput").value = "";
 
-                // Wait 5 seconds before refreshing story
+                // Auto-refresh story after 1 second
                 setTimeout(fetchStory, 1000);
             } catch (err) {
                 document.getElementById("storyOutput").textContent = "Error submitting sentence.";
