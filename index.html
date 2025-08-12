@@ -123,51 +123,76 @@
   </div>
 
   <script>
-    const storyEl = document.getElementById("story");
-    const inputEl = document.getElementById("sentence-input");
-    const addButton = document.getElementById("add-button");
+const storyEl = document.getElementById("story");
+const inputEl = document.getElementById("sentence-input");
+const addButton = document.getElementById("add-button");
 
-    // Store story sentences in an array
-    let story = [
-      "Once upon a time, a story began..."
-    ];
+let story = [
+  "Once upon a time, a story began..."
+];
 
-    // Function to render the story
-    function renderStory() {
-      storyEl.innerHTML = ""; // Clear current content
-      story.forEach((sentence, idx) => {
-        const p = document.createElement("p");
-        p.textContent = sentence;
-        p.classList.add("sentence");
-        if (idx === story.length - 1) {
-          p.classList.add("latest");
-        }
-        storyEl.appendChild(p);
-      });
-      storyEl.scrollTop = storyEl.scrollHeight; // Auto scroll down
+// Change this to your actual API endpoint URL
+const API_URL = "https://api2.longeststoryever.xyz/webhook-test/v1";
+
+function renderStory() {
+  storyEl.innerHTML = "";
+  story.forEach((sentence, idx) => {
+    const p = document.createElement("p");
+    p.textContent = sentence;
+    p.classList.add("sentence");
+    if (idx === story.length - 1) {
+      p.classList.add("latest");
     }
+    storyEl.appendChild(p);
+  });
+  storyEl.scrollTop = storyEl.scrollHeight;
+}
 
-    // Add sentence to the story
-    function addSentence() {
-      const text = inputEl.value.trim();
-      if (!text) return alert("Hey, please type a sentence before adding!");
-      story.push(text);
-      inputEl.value = "";
-      renderStory();
-    }
-
-    // Handle click and Enter key (without shift)
-    addButton.addEventListener("click", addSentence);
-
-    inputEl.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        addSentence();
-      }
+async function sendToAPI(sentence) {
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ sentence })
     });
 
-    // Initial render
-    renderStory();
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Sentence sent to API successfully:", data);
+  } catch (error) {
+    console.error("Failed to send sentence to API:", error);
+    alert("⚠️ Warning: Could not send your sentence to the server!");
+  }
+}
+
+async function addSentence() {
+  const text = inputEl.value.trim();
+  if (!text) return alert("Hey, please type a sentence before adding!");
+
+  story.push(text);
+  renderStory();
+  inputEl.value = "";
+
+  // Send sentence to backend API
+  await sendToAPI(text);
+}
+
+addButton.addEventListener("click", addSentence);
+
+inputEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    addSentence();
+  }
+});
+
+renderStory();
+
   </script>
 
 </body>
