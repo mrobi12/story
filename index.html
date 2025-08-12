@@ -16,14 +16,12 @@
       min-height: 100vh;
       color: #333;
     }
-
     h1 {
       margin-bottom: 1rem;
       color: #4a2f5b;
       text-shadow: 1px 1px 2px #fff5f7;
       user-select: none;
     }
-
     #story {
       width: 100%;
       max-width: 600px;
@@ -39,11 +37,9 @@
       margin-bottom: 1rem;
       border: 3px solid #a37c99;
     }
-
     .sentence {
       margin: 0.25rem 0;
     }
-
     .sentence.latest {
       font-weight: 700;
       color: #7b3f69;
@@ -52,14 +48,12 @@
       border-radius: 6px;
       box-shadow: 0 0 5px #c37a9daa;
     }
-
     #input-container {
       display: flex;
       max-width: 600px;
       width: 100%;
       gap: 0.75rem;
     }
-
     #sentence-input {
       flex-grow: 1;
       padding: 0.75rem 1rem;
@@ -76,7 +70,6 @@
       outline: none;
       box-shadow: 0 0 6px #c37a9d;
     }
-
     #add-button {
       background-color: #7b3f69;
       color: white;
@@ -95,7 +88,6 @@
     #add-button:active {
       background-color: #5a2e4a;
     }
-
     @media (max-width: 650px) {
       body {
         padding: 1rem;
@@ -109,7 +101,6 @@
 <body>
 
   <h1>The Never-Ending Story</h1>
-
   <div id="story"></div>
 
   <div id="input-container">
@@ -123,112 +114,94 @@
   </div>
 
   <script>
-const storyEl = document.getElementById("story");
-const inputEl = document.getElementById("sentence-input");
-const addButton = document.getElementById("add-button");
+    const storyEl = document.getElementById("story");
+    const inputEl = document.getElementById("sentence-input");
+    const addButton = document.getElementById("add-button");
 
-const API_ADD_SENTENCE_URL = "https://api2.longeststoryever.xyz/webhook/v1";
-const API_FETCH_STORY_URL = "https://api2.longeststoryever.xyz/webhook/story";
+    const API_ADD_SENTENCE_URL = "https://api2.longeststoryever.xyz/webhook/v1";
+    const API_FETCH_STORY_URL = "https://api2.longeststoryever.xyz/webhook/story";
 
-let story = ""; // now just one big string
+    let story = ""; // now just one big string
 
-// Disable input & button initially
-inputEl.disabled = true;
-addButton.disabled = true;
-storyEl.textContent = "Loading story...";
+    // Disable input & button initially
+    inputEl.disabled = true;
+    addButton.disabled = true;
+    storyEl.textContent = "Loading story...";
 
-function renderStory() {
-  // Just dump the whole story text, preserving whitespace with pre-wrap in CSS
-  storyEl.textContent = story;
-  storyEl.scrollTop = storyEl.scrollHeight;
-}
-
-async function fetchFullStory() {
-  try {
-    const response = await fetch(API_FETCH_STORY_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({})
-    });
-
-    if (!response.ok) throw new Error(`Failed to fetch story: ${response.status}`);
-
-    // Plain text response:
-    story = await response.text();
-
-    renderStory();
-
-    // Enable input & button after story loads
-    inputEl.disabled = false;
-    addButton.disabled = false;
-  } catch (error) {
-    console.error(error);
-    story = "(Failed to load story from server)";
-    renderStory();
-
-    // Still enable input so users can try adding sentences?
-    inputEl.disabled = false;
-    addButton.disabled = false;
-  }
-}
-
-async function sendToAPI(sentence) {
-  try {
-    const response = await fetch(API_ADD_SENTENCE_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ sentence })
-    });
-
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+    function renderStory() {
+      storyEl.textContent = story;
+      storyEl.scrollTop = storyEl.scrollHeight;
     }
 
-    const data = await response.json();
-    console.log("Sentence sent to API successfully:", data);
-  } catch (error) {
-    console.error("Failed to send sentence to API:", error);
-    alert("⚠️ Warning: Could not send your sentence to the server!");
-  }
-}
+    async function fetchFullStory() {
+      try {
+        const response = await fetch(API_FETCH_STORY_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({})
+        });
 
-async function addSentence() {
-  const text = inputEl.value.trim();
-  if (!text) return alert("Hey, please type a sentence before adding!");
+        const text = await response.text();
+        alert(text); // Alert webhook plain text
+        if (!response.ok) throw new Error(`Failed to fetch story: ${response.status}`);
 
-  // Disable input & button to prevent double submissions while sending
-  inputEl.disabled = true;
-  addButton.disabled = true;
+        story = text;
+        renderStory();
+        inputEl.disabled = false;
+        addButton.disabled = false;
+      } catch (error) {
+        console.error(error);
+        story = "(Failed to load story from server)";
+        renderStory();
+        inputEl.disabled = false;
+        addButton.disabled = false;
+      }
+    }
 
-  // Append the sentence to story string with a newline
-  story += (story ? "\n" : "") + text;
-  renderStory();
-  inputEl.value = "";
+    async function sendToAPI(sentence) {
+      try {
+        const response = await fetch(API_ADD_SENTENCE_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sentence })
+        });
 
-  await sendToAPI(text);
+        const text = await response.text();
+        alert(text); // Alert webhook plain text
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
 
-  // Re-enable input & button after sending
-  inputEl.disabled = false;
-  addButton.disabled = false;
-}
+      } catch (error) {
+        console.error("Failed to send sentence to API:", error);
+        alert("⚠️ Warning: Could not send your sentence to the server!");
+      }
+    }
 
-addButton.addEventListener("click", addSentence);
+    async function addSentence() {
+      const text = inputEl.value.trim();
+      if (!text) return alert("Hey, please type a sentence before adding!");
 
-inputEl.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    addSentence();
-  }
-});
+      inputEl.disabled = true;
+      addButton.disabled = true;
 
-fetchFullStory();
+      story += (story ? "\n" : "") + text;
+      renderStory();
+      inputEl.value = "";
 
+      await sendToAPI(text);
 
+      inputEl.disabled = false;
+      addButton.disabled = false;
+    }
+
+    addButton.addEventListener("click", addSentence);
+    inputEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        addSentence();
+      }
+    });
+
+    fetchFullStory();
   </script>
-
 </body>
 </html>
