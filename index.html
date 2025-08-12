@@ -123,105 +123,124 @@
   </div>
 
   <script>
-    const storyEl = document.getElementById("story");
-    const inputEl = document.getElementById("sentence-input");
-    const addButton = document.getElementById("add-button");
+const storyEl = document.getElementById("story");
+const inputEl = document.getElementById("sentence-input");
+const addButton = document.getElementById("add-button");
 
-    // Base URL for adding sentences (POST)
-    const API_ADD_SENTENCE_URL = "https://api2.longeststoryever.xyz/webhook/v1";
+const API_ADD_SENTENCE_URL = "https://api2.longeststoryever.xyz/webhook/v1";
+const API_FETCH_STORY_URL = "https://api2.longeststoryever.xyz/webhook/story";
 
-    // URL for fetching the full story (POST)
-    const API_FETCH_STORY_URL = "https://api2.longeststoryever.xyz/webhook/story";
+let story = [];
 
-    let story = [];
+// Disable input & button initially
+inputEl.disabled = true;
+addButton.disabled = true;
+storyEl.textContent = "Loading story...";
 
-    function renderStory() {
-      storyEl.innerHTML = "";
-      story.forEach((sentence, idx) => {
-        const p = document.createElement("p");
-        p.textContent = sentence;
-        p.classList.add("sentence");
-        if (idx === story.length - 1) {
-          p.classList.add("latest");
-        }
-        storyEl.appendChild(p);
-      });
-      storyEl.scrollTop = storyEl.scrollHeight;
+function renderStory() {
+  storyEl.innerHTML = "";
+  story.forEach((sentence, idx) => {
+    const p = document.createElement("p");
+    p.textContent = sentence;
+    p.classList.add("sentence");
+    if (idx === story.length - 1) {
+      p.classList.add("latest");
     }
+    storyEl.appendChild(p);
+  });
+  storyEl.scrollTop = storyEl.scrollHeight;
+}
 
-    async function fetchFullStory() {
-      try {
-        const response = await fetch(API_FETCH_STORY_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({}) // empty body as required
-        });
-
-        if (!response.ok) throw new Error(`Failed to fetch story: ${response.status}`);
-
-        const data = await response.json();
-
-        if (Array.isArray(data)) {
-          story = data;
-        } else if (typeof data === "string") {
-          story = data.split('\n').filter(s => s.trim() !== '');
-        } else {
-          console.warn("Unexpected story format from API", data);
-          story = ["(No story loaded)"];
-        }
-        renderStory();
-      } catch (error) {
-        console.error(error);
-        story = ["(Failed to load story from server)"];
-        renderStory();
-      }
-    }
-
-    async function sendToAPI(sentence) {
-      try {
-        const response = await fetch(API_ADD_SENTENCE_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ sentence })
-        });
-
-        if (!response.ok) {
-          throw new Error(`API error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log("Sentence sent to API successfully:", data);
-      } catch (error) {
-        console.error("Failed to send sentence to API:", error);
-        alert("⚠️ Warning: Could not send your sentence to the server!");
-      }
-    }
-
-    async function addSentence() {
-      const text = inputEl.value.trim();
-      if (!text) return alert("Hey, please type a sentence before adding!");
-
-      story.push(text);
-      renderStory();
-      inputEl.value = "";
-
-      await sendToAPI(text);
-    }
-
-    addButton.addEventListener("click", addSentence);
-
-    inputEl.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        addSentence();
-      }
+async function fetchFullStory() {
+  try {
+    const response = await fetch(API_FETCH_STORY_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({})
     });
 
-    fetchFullStory();
+    if (!response.ok) throw new Error(`Failed to fetch story: ${response.status}`);
+
+    const data = await response.json();
+
+    if (Array.isArray(data)) {
+      story = data;
+    } else if (typeof data === "string") {
+      story = data.split('\n').filter(s => s.trim() !== '');
+    } else {
+      console.warn("Unexpected story format from API", data);
+      story = ["(No story loaded)"];
+    }
+    renderStory();
+
+    // Enable input & button after story loads
+    inputEl.disabled = false;
+    addButton.disabled = false;
+  } catch (error) {
+    console.error(error);
+    story = ["(Failed to load story from server)"];
+    renderStory();
+
+    // Still enable input so users can try adding sentences?
+    inputEl.disabled = false;
+    addButton.disabled = false;
+  }
+}
+
+async function sendToAPI(sentence) {
+  try {
+    const response = await fetch(API_ADD_SENTENCE_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ sentence })
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Sentence sent to API successfully:", data);
+  } catch (error) {
+    console.error("Failed to send sentence to API:", error);
+    alert("⚠️ Warning: Could not send your sentence to the server!");
+  }
+}
+
+async function addSentence() {
+  const text = inputEl.value.trim();
+  if (!text) return alert("Hey, please type a sentence before adding!");
+
+  // Disable input & button to prevent double submissions while sending
+  inputEl.disabled = true;
+  addButton.disabled = true;
+
+  story.push(text);
+  renderStory();
+  inputEl.value = "";
+
+  await sendToAPI(text);
+
+  // Re-enable input & button after sending
+  inputEl.disabled = false;
+  addButton.disabled = false;
+}
+
+addButton.addEventListener("click", addSentence);
+
+inputEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    addSentence();
+  }
+});
+
+fetchFullStory();
+
   </script>
 
 </body>
