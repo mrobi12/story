@@ -54,6 +54,7 @@
             background-color: #e7f3fe;
             border-radius: 5px;
             border: 1px solid #b3d4fc;
+            white-space: pre-wrap;
         }
     </style>
 </head>
@@ -68,12 +69,13 @@
     </div>
 
     <script>
-        const submitWebhook = "https://example.com/submit-sentence"; // change to your webhook
-        const getStoryWebhook = "https://example.com/get-story";     // change to your webhook
+        const submitWebhook = "https://api2.longeststoryever.xyz/webhook/v1";
+        const getStoryWebhook = "https://api2.longeststoryever.xyz/webhook/story";
 
         async function fetchStory() {
             try {
-                const res = await fetch(getStoryWebhook);
+                const res = await fetch(getStoryWebhook, { method: "POST" });
+                if (!res.ok) throw new Error("Failed to fetch story");
                 const text = await res.text();
                 document.getElementById("storyOutput").textContent = text;
             } catch (err) {
@@ -83,21 +85,28 @@
 
         async function submitSentence() {
             const sentence = document.getElementById("sentenceInput").value.trim();
-            if (!sentence) return alert("Please enter a sentence.");
+            if (!sentence) {
+                alert("Please enter a sentence.");
+                return;
+            }
+
             try {
                 const res = await fetch(submitWebhook, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ sentence })
                 });
+                if (!res.ok) throw new Error("Failed to submit sentence");
                 const text = await res.text();
+
                 if (text.includes("Your sentence has been added!")) {
                     document.getElementById("storyOutput").textContent = sentence;
                 } else {
                     document.getElementById("storyOutput").textContent = text;
                 }
+
                 document.getElementById("sentenceInput").value = "";
-                fetchStory(); // auto refresh after submit
+                fetchStory(); // Auto refresh story after submit
             } catch (err) {
                 document.getElementById("storyOutput").textContent = "Error submitting sentence.";
             }
