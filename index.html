@@ -2,136 +2,87 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Longest Story Ever</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
+            background-color: #f4f4f4;
             text-align: center;
             margin: 0;
             padding: 0;
         }
-        .container {
-            max-width: 800px;
-            margin: auto;
+        #story {
             background: white;
             padding: 20px;
-            margin-top: 50px;
+            margin: 20px auto;
+            max-width: 600px;
             border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            min-height: 150px;
         }
-        textarea {
-            width: 100%;
-            height: 50px; /* smaller input */
-            padding: 8px;
-            font-size: 1em;
-            border-radius: 5px;
+        #sentenceInput {
+            width: 60%;
+            padding: 10px;
             border: 1px solid #ccc;
-            resize: none;
+            border-radius: 5px;
         }
-        button {
-            padding: 10px 20px;
-            margin-top: 10px;
-            font-size: 1em;
+        #submitBtn {
+            padding: 10px 15px;
             border: none;
+            background-color: #28a745;
+            color: white;
             border-radius: 5px;
             cursor: pointer;
-            background-color: #4CAF50;
-            color: white;
         }
-        button:hover {
-            background-color: #45a049;
-        }
-        .refresh {
-            background-color: #2196F3;
-        }
-        .refresh:hover {
-            background-color: #0b7dda;
-        }
-        .result {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #e7f3fe;
-            border-radius: 5px;
-            border: 1px solid #b3d4fc;
-            white-space: pre-wrap;
-            height: 400px; /* bigger story display */
-            overflow-y: auto;
-            font-size: 1.1em;
+        #submitBtn:disabled {
+            background-color: #ccc;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>The Longest Story Ever</h1>
-        <textarea id="sentenceInput" placeholder="Add your sentence..."></textarea>
-        <br>
-        <button onclick="submitSentence()">Submit Sentence</button>
-        <button class="refresh" onclick="fetchStory()">Refresh Story</button>
-        <div class="result" id="storyOutput">Loading story...</div>
-    </div>
+    <h1>Longest Story Ever</h1>
+    <div id="story">Loading story...</div>
+    <input type="text" id="sentenceInput" placeholder="Add your sentence...">
+    <button id="submitBtn">Submit</button>
 
     <script>
-        const submitWebhook = "https://api2.longeststoryever.xyz/webhook/v1";
-        const getStoryWebhook = "https://api2.longeststoryever.xyz/webhook/story";
-
-        // ✅ Ensure first letter is uppercase & correct punctuation
-        function formatSentence(sentence) {
-            sentence = sentence.trim();
-            if (sentence.length === 0) return "";
-            sentence = sentence.charAt(0).toUpperCase() + sentence.slice(1);
-            if (!/[.!?]$/.test(sentence)) {
-                sentence += ".";
-            }
-            return sentence;
-        }
+        const storyDiv = document.getElementById('story');
+        const input = document.getElementById('sentenceInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const apiUrl = 'https://api2.longeststoryever.xyz';
 
         async function fetchStory() {
             try {
-                const res = await fetch(getStoryWebhook, { method: "POST" });
-                if (!res.ok) throw new Error("Failed to fetch story");
-                const text = await res.text();
-                document.getElementById("storyOutput").textContent = text;
-            } catch (err) {
-                document.getElementById("storyOutput").textContent = "Error loading story.";
+                const response = await fetch(apiUrl + '/story');
+                const data = await response.json();
+                storyDiv.textContent = data.story;
+            } catch (error) {
+                storyDiv.textContent = 'Failed to load story.';
             }
         }
 
-        async function submitSentence() {
-            let sentence = document.getElementById("sentenceInput").value;
-            sentence = formatSentence(sentence);
+        submitBtn.addEventListener('click', async () => {
+            const sentence = input.value.trim();
+            if (!sentence) return;
 
-            if (!sentence) {
-                alert("Please enter a sentence.");
-                return;
-            }
+            submitBtn.disabled = true;
+            input.value = '';
 
             try {
-                const res = await fetch(submitWebhook, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                await fetch(apiUrl + '/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ sentence })
                 });
-                if (!res.ok) throw new Error("Failed to submit sentence");
-                const text = await res.text();
-
-                // Show API message first
-                if (text.includes("Your sentence has been added!")) {
-                    document.getElementById("storyOutput").textContent = sentence;
-                } else {
-                    document.getElementById("storyOutput").textContent = text; 
-                }
-
-                document.getElementById("sentenceInput").value = "";
-
-                // Auto-refresh story after 1 second
-                setTimeout(fetchStory, 1000);
-            } catch (err) {
-                document.getElementById("storyOutput").textContent = "Error submitting sentence.";
+                await fetchStory();
+            } catch (error) {
+                alert('Failed to add sentence.');
+            } finally {
+                submitBtn.disabled = false;
             }
-        }
+        });
 
-        // Load story on page load
         fetchStory();
     </script>
 </body>
