@@ -12,7 +12,7 @@
             padding: 0;
         }
         .container {
-            max-width: 700px;
+            max-width: 800px;
             margin: auto;
             background: white;
             padding: 20px;
@@ -22,8 +22,8 @@
         }
         textarea {
             width: 100%;
-            height: 100px;
-            padding: 10px;
+            height: 50px; /* smaller input */
+            padding: 8px;
             font-size: 1em;
             border-radius: 5px;
             border: 1px solid #ccc;
@@ -55,6 +55,9 @@
             border-radius: 5px;
             border: 1px solid #b3d4fc;
             white-space: pre-wrap;
+            height: 400px; /* bigger story display */
+            overflow-y: auto;
+            font-size: 1.1em;
         }
     </style>
 </head>
@@ -99,14 +102,17 @@
                 if (!res.ok) throw new Error("Failed to submit sentence");
                 const text = await res.text();
 
+                // Show API message first
                 if (text.includes("Your sentence has been added!")) {
                     document.getElementById("storyOutput").textContent = sentence;
                 } else {
-                    document.getElementById("storyOutput").textContent = text;
+                    document.getElementById("storyOutput").textContent = text; 
                 }
 
                 document.getElementById("sentenceInput").value = "";
-                fetchStory(); // Auto refresh story after submit
+
+                // Wait 5 seconds before refreshing story
+                setTimeout(fetchStory, 5000);
             } catch (err) {
                 document.getElementById("storyOutput").textContent = "Error submitting sentence.";
             }
