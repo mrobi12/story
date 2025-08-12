@@ -130,7 +130,7 @@ const addButton = document.getElementById("add-button");
 const API_ADD_SENTENCE_URL = "https://api2.longeststoryever.xyz/webhook/v1";
 const API_FETCH_STORY_URL = "https://api2.longeststoryever.xyz/webhook/story";
 
-let story = [];
+let story = ""; // now just one big string
 
 // Disable input & button initially
 inputEl.disabled = true;
@@ -138,16 +138,8 @@ addButton.disabled = true;
 storyEl.textContent = "Loading story...";
 
 function renderStory() {
-  storyEl.innerHTML = "";
-  story.forEach((sentence, idx) => {
-    const p = document.createElement("p");
-    p.textContent = sentence;
-    p.classList.add("sentence");
-    if (idx === story.length - 1) {
-      p.classList.add("latest");
-    }
-    storyEl.appendChild(p);
-  });
+  // Just dump the whole story text, preserving whitespace with pre-wrap in CSS
+  storyEl.textContent = story;
   storyEl.scrollTop = storyEl.scrollHeight;
 }
 
@@ -163,16 +155,9 @@ async function fetchFullStory() {
 
     if (!response.ok) throw new Error(`Failed to fetch story: ${response.status}`);
 
-    const data = await response.json();
+    // Plain text response:
+    story = await response.text();
 
-    if (Array.isArray(data)) {
-      story = data;
-    } else if (typeof data === "string") {
-      story = data.split('\n').filter(s => s.trim() !== '');
-    } else {
-      console.warn("Unexpected story format from API", data);
-      story = ["(No story loaded)"];
-    }
     renderStory();
 
     // Enable input & button after story loads
@@ -180,7 +165,7 @@ async function fetchFullStory() {
     addButton.disabled = false;
   } catch (error) {
     console.error(error);
-    story = ["(Failed to load story from server)"];
+    story = "(Failed to load story from server)";
     renderStory();
 
     // Still enable input so users can try adding sentences?
@@ -219,7 +204,8 @@ async function addSentence() {
   inputEl.disabled = true;
   addButton.disabled = true;
 
-  story.push(text);
+  // Append the sentence to story string with a newline
+  story += (story ? "\n" : "") + text;
   renderStory();
   inputEl.value = "";
 
@@ -240,6 +226,7 @@ inputEl.addEventListener("keydown", (e) => {
 });
 
 fetchFullStory();
+
 
   </script>
 
