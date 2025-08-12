@@ -112,7 +112,7 @@
                 document.getElementById("sentenceInput").value = "";
 
                 // Wait 5 seconds before refreshing story
-                setTimeout(fetchStory, 5000);
+                setTimeout(fetchStory, 1000);
             } catch (err) {
                 document.getElementById("storyOutput").textContent = "Error submitting sentence.";
             }
